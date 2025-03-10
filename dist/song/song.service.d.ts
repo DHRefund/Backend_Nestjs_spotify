@@ -6,11 +6,11 @@ export declare class SongService {
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         artist: string;
         duration: number;
         url: string;
         imageUrl: string | null;
-        userId: string;
     }[]>;
 }

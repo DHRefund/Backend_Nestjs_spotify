@@ -3,8 +3,8 @@ export declare class UserController {
     private userService;
     constructor(userService: UserService);
     getMe(userId: string): Promise<{
-        id: string;
         email: string;
+        id: string;
         name: string;
         password: string;
         createdAt: Date;

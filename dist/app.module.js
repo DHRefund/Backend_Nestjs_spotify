@@ -14,6 +14,7 @@ const user_module_1 = require("./user/user.module");
 const song_module_1 = require("./song/song.module");
 const playlist_module_1 = require("./playlist/playlist.module");
 const prisma_module_1 = require("./prisma/prisma.module");
+const users_module_1 = require("./users/users.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -28,6 +29,7 @@ exports.AppModule = AppModule = __decorate([
             user_module_1.UserModule,
             song_module_1.SongModule,
             playlist_module_1.PlaylistModule,
+            users_module_1.UsersModule,
         ],
     })
 ], AppModule);

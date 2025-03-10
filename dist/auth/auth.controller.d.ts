@@ -11,7 +11,7 @@ export declare class AuthController {
             name: string;
         };
     }>;
-    login(email: string, password: string): Promise<{
+    login(req: any, email: string, password: string): Promise<{
         access_token: string;
         refresh_token: string;
         user: {
@@ -20,9 +20,12 @@ export declare class AuthController {
             name: string;
         };
     }>;
-    getMe(req: any): Promise<{
-        id: string;
-        email: string;
-        name: string;
+    refresh(refreshToken: string): Promise<{
+        accessToken: string;
+        refreshToken: string;
     }>;
+    logout(req: any, refreshToken: string): Promise<{
+        success: boolean;
+    }>;
+    getProfile(req: any): any;
 }

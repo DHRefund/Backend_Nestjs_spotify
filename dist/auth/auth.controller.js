@@ -23,11 +23,20 @@ let AuthController = class AuthController {
     async register(email, password, name) {
         return this.authService.register(email, password, name);
     }
-    async login(email, password) {
+    async login(req, email, password) {
         return this.authService.login(email, password);
     }
-    async getMe(req) {
-        return this.authService.getMe(req.user.sub);
+    async refresh(refreshToken) {
+        if (!refreshToken) {
+            throw new common_1.UnauthorizedException("Refresh token is required");
+        }
+        return this.authService.refreshToken(refreshToken);
+    }
+    async logout(req, refreshToken) {
+        return this.authService.logout(req.user.id, refreshToken);
+    }
+    getProfile(req) {
+        return req.user;
     }
 };
 exports.AuthController = AuthController;
@@ -42,21 +51,37 @@ __decorate([
 ], AuthController.prototype, "register", null);
 __decorate([
     (0, common_1.Post)("login"),
-    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
-    __param(0, (0, common_1.Body)("email")),
-    __param(1, (0, common_1.Body)("password")),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)("email")),
+    __param(2, (0, common_1.Body)("password")),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [Object, String, String]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.Post)("refresh"),
+    __param(0, (0, common_1.Body)("refreshToken")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "refresh", null);
+__decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.Post)("logout"),
+    __param(0, (0, common_1.Request)()),
+    __param(1, (0, common_1.Body)("refreshToken")),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "logout", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)("me"),
     __param(0, (0, common_1.Request)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], AuthController.prototype, "getMe", null);
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "getProfile", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)("auth"),
     __metadata("design:paramtypes", [auth_service_1.AuthService])

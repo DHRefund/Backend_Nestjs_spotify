@@ -7,12 +7,12 @@ export declare class PlaylistController {
             id: string;
             createdAt: Date;
             updatedAt: Date;
+            userId: string;
             title: string;
             artist: string;
             duration: number;
             url: string;
             imageUrl: string | null;
-            userId: string;
         }[];
     } & {
         id: string;

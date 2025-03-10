@@ -1,4 +1,14 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Get, UseGuards, Request } from "@nestjs/common";
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Get,
+  UseGuards,
+  Request,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 
@@ -12,14 +22,27 @@ export class AuthController {
   }
 
   @Post("login")
-  @HttpCode(HttpStatus.OK)
-  async login(@Body("email") email: string, @Body("password") password: string) {
+  async login(@Request() req, @Body("email") email: string, @Body("password") password: string) {
     return this.authService.login(email, password);
+  }
+
+  @Post("refresh")
+  async refresh(@Body("refreshToken") refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException("Refresh token is required");
+    }
+    return this.authService.refreshToken(refreshToken);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post("logout")
+  async logout(@Request() req, @Body("refreshToken") refreshToken: string) {
+    return this.authService.logout(req.user.id, refreshToken);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get("me")
-  async getMe(@Request() req) {
-    return this.authService.getMe(req.user.sub);
+  getProfile(@Request() req) {
+    return req.user;
   }
 }
