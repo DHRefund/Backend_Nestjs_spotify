@@ -39,10 +39,4 @@ export class AuthController {
   async logout(@Request() req, @Body("refreshToken") refreshToken: string) {
     return this.authService.logout(req.user.id, refreshToken);
   }
-
-  @UseGuards(JwtAuthGuard)
-  @Get("me")
-  getProfile(@Request() req) {
-    return req.user;
-  }
 }

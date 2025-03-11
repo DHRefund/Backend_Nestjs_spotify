@@ -16,12 +16,44 @@ let UserService = class UserService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async findById(id) {
+    async findById(userId) {
         const user = await this.prisma.user.findUnique({
-            where: { id },
+            where: { id: userId },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                createdAt: true,
+            },
         });
-        delete user.password;
+        if (!user) {
+            throw new common_1.NotFoundException("User not found");
+        }
         return user;
+    }
+    async findByEmail(email) {
+        const user = await this.prisma.user.findUnique({
+            where: { email },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                createdAt: true,
+            },
+        });
+        return user;
+    }
+    async updateUser(userId, data) {
+        return await this.prisma.user.update({
+            where: { id: userId },
+            data,
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                createdAt: true,
+            },
+        });
     }
 };
 exports.UserService = UserService;

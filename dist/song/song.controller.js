@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SongController = void 0;
 const common_1 = require("@nestjs/common");
 const song_service_1 = require("./song.service");
-const jwt_guard_1 = require("../auth/guards/jwt.guard");
+const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 let SongController = class SongController {
     constructor(songService) {
         this.songService = songService;
@@ -29,7 +29,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SongController.prototype, "findAll", null);
 exports.SongController = SongController = __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)("songs"),
     __metadata("design:paramtypes", [song_service_1.SongService])
 ], SongController);

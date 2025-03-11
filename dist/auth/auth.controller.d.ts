@@ -27,5 +27,4 @@ export declare class AuthController {
     logout(req: any, refreshToken: string): Promise<{
         success: boolean;
     }>;
-    getProfile(req: any): any;
 }

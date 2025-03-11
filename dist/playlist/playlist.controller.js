@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PlaylistController = void 0;
 const common_1 = require("@nestjs/common");
 const playlist_service_1 = require("./playlist.service");
-const jwt_guard_1 = require("../auth/guards/jwt.guard");
+const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const get_user_decorator_1 = require("../auth/decorators/get-user.decorator");
 let PlaylistController = class PlaylistController {
     constructor(playlistService) {
@@ -34,7 +34,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PlaylistController.prototype, "findAll", null);
 exports.PlaylistController = PlaylistController = __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)("playlists"),
     __metadata("design:paramtypes", [playlist_service_1.PlaylistService])
 ], PlaylistController);

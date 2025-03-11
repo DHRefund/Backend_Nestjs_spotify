@@ -15,27 +15,39 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
 const common_1 = require("@nestjs/common");
 const user_service_1 = require("./user.service");
-const jwt_guard_1 = require("../auth/guards/jwt.guard");
+const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const get_user_decorator_1 = require("../auth/decorators/get-user.decorator");
+const common_2 = require("@nestjs/common");
 let UserController = class UserController {
     constructor(userService) {
         this.userService = userService;
     }
-    getMe(userId) {
-        return this.userService.findById(userId);
+    async getMe(req) {
+        return this.userService.findByEmail(req.user.email);
+    }
+    async updateMe(userId, updateData) {
+        return this.userService.updateUser(userId, updateData);
     }
 };
 exports.UserController = UserController;
 __decorate([
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Get)("me"),
-    __param(0, (0, get_user_decorator_1.GetUser)("id")),
+    __param(0, (0, common_2.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
 ], UserController.prototype, "getMe", null);
+__decorate([
+    (0, common_1.Put)("me"),
+    __param(0, (0, get_user_decorator_1.GetUser)("id")),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], UserController.prototype, "updateMe", null);
 exports.UserController = UserController = __decorate([
-    (0, common_1.UseGuards)(jwt_guard_1.JwtGuard),
-    (0, common_1.Controller)("users"),
+    (0, common_1.Controller)("user"),
     __metadata("design:paramtypes", [user_service_1.UserService])
 ], UserController);
 //# sourceMappingURL=user.controller.js.map

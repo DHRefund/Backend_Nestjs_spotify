@@ -1,9 +1,9 @@
 import { Controller, Get, UseGuards } from "@nestjs/common";
 import { PlaylistService } from "./playlist.service";
-import { JwtGuard } from "../auth/guards/jwt.guard";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { GetUser } from "../auth/decorators/get-user.decorator";
 
-@UseGuards(JwtGuard)
+@UseGuards(JwtAuthGuard)
 @Controller("playlists")
 export class PlaylistController {
   constructor(private playlistService: PlaylistService) {}
