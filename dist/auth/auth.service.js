@@ -14,7 +14,6 @@ const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const prisma_service_1 = require("../prisma/prisma.service");
 const bcrypt = require("bcrypt");
-const uuid_1 = require("uuid");
 let AuthService = class AuthService {
     constructor(prisma, jwtService) {
         this.prisma = prisma;
@@ -42,7 +41,15 @@ let AuthService = class AuthService {
             refreshToken,
         };
     }
-    async register(email, password, name) {
+    setTokenCookie(response, refreshToken) {
+        response.cookie("refresh_token", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+    }
+    async register(email, password, name, response) {
         const existingUser = await this.prisma.user.findUnique({
             where: { email },
         });
@@ -54,13 +61,13 @@ let AuthService = class AuthService {
             data: {
                 email,
                 password: hashedPassword,
-                name: name || "",
+                name,
             },
         });
         const tokens = await this.getTokens(user.id, user.email);
+        this.setTokenCookie(response, tokens.refreshToken);
         return {
             access_token: tokens.accessToken,
-            refresh_token: tokens.refreshToken,
             user: {
                 id: user.id,
                 email: user.email,
@@ -68,7 +75,7 @@ let AuthService = class AuthService {
             },
         };
     }
-    async login(email, password) {
+    async login(email, password, response) {
         const user = await this.prisma.user.findUnique({
             where: { email },
         });
@@ -80,9 +87,9 @@ let AuthService = class AuthService {
             throw new common_1.UnauthorizedException("Invalid credentials");
         }
         const tokens = await this.getTokens(user.id, user.email);
+        this.setTokenCookie(response, tokens.refreshToken);
         return {
             access_token: tokens.accessToken,
-            refresh_token: tokens.refreshToken,
             user: {
                 id: user.id,
                 email: user.email,
@@ -114,40 +121,29 @@ let AuthService = class AuthService {
         }
         return null;
     }
-    async refreshToken(token) {
-        const refreshTokenRecord = await this.prisma.refreshToken.findUnique({
-            where: { token },
-            include: { user: true },
-        });
-        if (!refreshTokenRecord || refreshTokenRecord.expiresAt < new Date()) {
-            if (refreshTokenRecord) {
-                await this.prisma.refreshToken.delete({
-                    where: { id: refreshTokenRecord.id },
-                });
-            }
-            throw new common_1.UnauthorizedException("Invalid or expired refresh token");
+    async refresh(refreshToken, response) {
+        try {
+            const payload = this.jwtService.verify(refreshToken, {
+                secret: process.env.JWT_REFRESH_SECRET,
+            });
+            const user = await this.prisma.user.findUnique({
+                where: { id: payload.sub },
+            });
+            if (!user)
+                throw new common_1.UnauthorizedException();
+            const tokens = await this.getTokens(user.id, user.email);
+            this.setTokenCookie(response, tokens.refreshToken);
+            return {
+                access_token: tokens.accessToken,
+            };
         }
-        await this.prisma.refreshToken.delete({
-            where: { id: refreshTokenRecord.id },
-        });
-        const newRefreshToken = (0, uuid_1.v4)();
-        const refreshTokenExpiry = new Date();
-        refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 7);
-        await this.prisma.refreshToken.create({
-            data: {
-                token: newRefreshToken,
-                userId: refreshTokenRecord.user.id,
-                expiresAt: refreshTokenExpiry,
-            },
-        });
-        const payload = { email: refreshTokenRecord.user.email, sub: refreshTokenRecord.user.id };
-        const newAccessToken = this.jwtService.sign(payload, {
-            expiresIn: "15m",
-        });
-        return {
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken,
-        };
+        catch {
+            throw new common_1.UnauthorizedException();
+        }
+    }
+    async logout(response) {
+        response.clearCookie("refresh_token");
+        return { success: true };
     }
     async getUserFromToken(token) {
         try {
@@ -160,15 +156,6 @@ let AuthService = class AuthService {
         catch (error) {
             throw new common_1.UnauthorizedException("Invalid token");
         }
-    }
-    async logout(userId, refreshToken) {
-        await this.prisma.refreshToken.deleteMany({
-            where: {
-                userId,
-                token: refreshToken,
-            },
-        });
-        return { success: true };
     }
 };
 exports.AuthService = AuthService;

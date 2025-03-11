@@ -1,5 +1,6 @@
 import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
+import { Response } from "express";
 import { PrismaService } from "../prisma/prisma.service";
 import * as bcrypt from "bcrypt";
 import { User } from "@prisma/client";
@@ -41,7 +42,17 @@ export class AuthService {
       refreshToken,
     };
   }
-  async register(email: string, password: string, name?: string) {
+
+  private setTokenCookie(response: Response, refreshToken: string) {
+    response.cookie("refresh_token", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+  }
+
+  async register(email: string, password: string, name: string, response: Response) {
     // Check if user exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
@@ -59,16 +70,18 @@ export class AuthService {
       data: {
         email,
         password: hashedPassword,
-        name: name || "",
+        name,
       },
     });
 
     // Generate tokens
     const tokens = await this.getTokens(user.id, user.email);
 
+    // Set refresh token in HttpOnly cookie
+    this.setTokenCookie(response, tokens.refreshToken);
+
     return {
       access_token: tokens.accessToken,
-      refresh_token: tokens.refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -77,7 +90,7 @@ export class AuthService {
     };
   }
 
-  async login(email: string, password: string) {
+  async login(email: string, password: string, response: Response) {
     // Find user
     const user = await this.prisma.user.findUnique({
       where: { email },
@@ -97,9 +110,11 @@ export class AuthService {
     // Generate tokens
     const tokens = await this.getTokens(user.id, user.email);
 
+    // Set refresh token in HttpOnly cookie
+    this.setTokenCookie(response, tokens.refreshToken);
+
     return {
       access_token: tokens.accessToken,
-      refresh_token: tokens.refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -137,53 +152,34 @@ export class AuthService {
     return null;
   }
 
-  async refreshToken(token: string) {
-    // Tìm refresh token trong database
-    const refreshTokenRecord = await this.prisma.refreshToken.findUnique({
-      where: { token },
-      include: { user: true },
-    });
+  async refresh(refreshToken: string, response: Response) {
+    try {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET,
+      });
 
-    // Kiểm tra xem token có tồn tại và còn hiệu lực không
-    if (!refreshTokenRecord || refreshTokenRecord.expiresAt < new Date()) {
-      // Nếu token đã hết hạn, xóa nó khỏi database
-      if (refreshTokenRecord) {
-        await this.prisma.refreshToken.delete({
-          where: { id: refreshTokenRecord.id },
-        });
-      }
-      throw new UnauthorizedException("Invalid or expired refresh token");
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+      });
+
+      if (!user) throw new UnauthorizedException();
+
+      const tokens = await this.getTokens(user.id, user.email);
+
+      // Set new refresh token in HttpOnly cookie
+      this.setTokenCookie(response, tokens.refreshToken);
+
+      return {
+        access_token: tokens.accessToken,
+      };
+    } catch {
+      throw new UnauthorizedException();
     }
+  }
 
-    // Xóa refresh token cũ
-    await this.prisma.refreshToken.delete({
-      where: { id: refreshTokenRecord.id },
-    });
-
-    // Tạo refresh token mới
-    const newRefreshToken = uuidv4();
-    const refreshTokenExpiry = new Date();
-    refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 7);
-
-    // Lưu refresh token mới vào database
-    await this.prisma.refreshToken.create({
-      data: {
-        token: newRefreshToken,
-        userId: refreshTokenRecord.user.id,
-        expiresAt: refreshTokenExpiry,
-      },
-    });
-
-    // Tạo access token mới
-    const payload = { email: refreshTokenRecord.user.email, sub: refreshTokenRecord.user.id };
-    const newAccessToken = this.jwtService.sign(payload, {
-      expiresIn: "15m",
-    });
-
-    return {
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
-    };
+  async logout(response: Response) {
+    response.clearCookie("refresh_token");
+    return { success: true };
   }
 
   async getUserFromToken(token: string): Promise<User> {
@@ -196,16 +192,5 @@ export class AuthService {
     } catch (error) {
       throw new UnauthorizedException("Invalid token");
     }
-  }
-
-  async logout(userId: string, refreshToken: string) {
-    // Xóa refresh token khỏi database
-    await this.prisma.refreshToken.deleteMany({
-      where: {
-        userId,
-        token: refreshToken,
-      },
-    });
-    return { success: true };
   }
 }

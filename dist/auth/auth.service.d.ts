@@ -1,4 +1,5 @@
 import { JwtService } from "@nestjs/jwt";
+import { Response } from "express";
 import { PrismaService } from "../prisma/prisma.service";
 import { User } from "@prisma/client";
 export declare class AuthService {
@@ -6,18 +7,17 @@ export declare class AuthService {
     private jwtService;
     constructor(prisma: PrismaService, jwtService: JwtService);
     private getTokens;
-    register(email: string, password: string, name?: string): Promise<{
+    private setTokenCookie;
+    register(email: string, password: string, name: string, response: Response): Promise<{
         access_token: string;
-        refresh_token: string;
         user: {
             id: string;
             email: string;
             name: string;
         };
     }>;
-    login(email: string, password: string): Promise<{
+    login(email: string, password: string, response: Response): Promise<{
         access_token: string;
-        refresh_token: string;
         user: {
             id: string;
             email: string;
@@ -30,12 +30,11 @@ export declare class AuthService {
         name: string;
     }>;
     validateUser(email: string, password: string): Promise<any>;
-    refreshToken(token: string): Promise<{
-        accessToken: string;
-        refreshToken: string;
+    refresh(refreshToken: string, response: Response): Promise<{
+        access_token: string;
     }>;
-    getUserFromToken(token: string): Promise<User>;
-    logout(userId: string, refreshToken: string): Promise<{
+    logout(response: Response): Promise<{
         success: boolean;
     }>;
+    getUserFromToken(token: string): Promise<User>;
 }

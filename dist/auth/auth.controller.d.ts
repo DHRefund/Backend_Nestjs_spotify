@@ -1,30 +1,28 @@
+import { Response } from "express";
 import { AuthService } from "./auth.service";
 export declare class AuthController {
     private authService;
     constructor(authService: AuthService);
-    register(email: string, password: string, name: string): Promise<{
+    register(email: string, password: string, name: string, response: Response): Promise<{
         access_token: string;
-        refresh_token: string;
         user: {
             id: string;
             email: string;
             name: string;
         };
     }>;
-    login(req: any, email: string, password: string): Promise<{
+    login(email: string, password: string, response: Response): Promise<{
         access_token: string;
-        refresh_token: string;
         user: {
             id: string;
             email: string;
             name: string;
         };
     }>;
-    refresh(refreshToken: string): Promise<{
-        accessToken: string;
-        refreshToken: string;
+    refresh(refreshToken: string, response: Response): Promise<{
+        access_token: string;
     }>;
-    logout(req: any, refreshToken: string): Promise<{
+    logout(response: Response): Promise<{
         success: boolean;
     }>;
 }

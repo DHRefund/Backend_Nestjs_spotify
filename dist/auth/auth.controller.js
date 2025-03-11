@@ -20,20 +20,20 @@ let AuthController = class AuthController {
     constructor(authService) {
         this.authService = authService;
     }
-    async register(email, password, name) {
-        return this.authService.register(email, password, name);
+    async register(email, password, name, response) {
+        return this.authService.register(email, password, name, response);
     }
-    async login(req, email, password) {
-        return this.authService.login(email, password);
+    async login(email, password, response) {
+        return this.authService.login(email, password, response);
     }
-    async refresh(refreshToken) {
+    async refresh(refreshToken, response) {
         if (!refreshToken) {
             throw new common_1.UnauthorizedException("Refresh token is required");
         }
-        return this.authService.refreshToken(refreshToken);
+        return this.authService.refresh(refreshToken, response);
     }
-    async logout(req, refreshToken) {
-        return this.authService.logout(req.user.id, refreshToken);
+    async logout(response) {
+        return this.authService.logout(response);
     }
 };
 exports.AuthController = AuthController;
@@ -42,33 +42,34 @@ __decorate([
     __param(0, (0, common_1.Body)("email")),
     __param(1, (0, common_1.Body)("password")),
     __param(2, (0, common_1.Body)("name")),
+    __param(3, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:paramtypes", [String, String, String, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "register", null);
 __decorate([
     (0, common_1.Post)("login"),
-    __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Body)("email")),
-    __param(2, (0, common_1.Body)("password")),
+    __param(0, (0, common_1.Body)("email")),
+    __param(1, (0, common_1.Body)("password")),
+    __param(2, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
     (0, common_1.Post)("refresh"),
     __param(0, (0, common_1.Body)("refreshToken")),
+    __param(1, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "refresh", null);
 __decorate([
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)("logout"),
-    __param(0, (0, common_1.Request)()),
-    __param(1, (0, common_1.Body)("refreshToken")),
+    __param(0, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "logout", null);
 exports.AuthController = AuthController = __decorate([
