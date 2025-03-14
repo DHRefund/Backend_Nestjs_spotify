@@ -4,14 +4,14 @@ export declare class UserService {
     constructor(prisma: PrismaService);
     findById(userId: string): Promise<{
         email: string;
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
     }>;
     findByEmail(email: string): Promise<{
         email: string;
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
     }>;
     updateUser(userId: string, data: {
@@ -19,8 +19,8 @@ export declare class UserService {
         email?: string;
     }): Promise<{
         email: string;
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
     }>;
 }

@@ -10,13 +10,13 @@ export declare class PlaylistController {
             userId: string;
             title: string;
             artist: string;
-            duration: number;
-            url: string;
+            songUrl: string;
             imageUrl: string | null;
+            duration: number;
         }[];
     } & {
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         userId: string;

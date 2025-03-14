@@ -4,8 +4,8 @@ export declare class UserController {
     constructor(userService: UserService);
     getMe(req: any): Promise<{
         email: string;
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
     }>;
     updateMe(userId: string, updateData: {
@@ -13,8 +13,8 @@ export declare class UserController {
         email?: string;
     }): Promise<{
         email: string;
-        id: string;
         name: string;
+        id: string;
         createdAt: Date;
     }>;
 }

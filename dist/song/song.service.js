@@ -17,7 +17,49 @@ let SongService = class SongService {
         this.prisma = prisma;
     }
     async findAll() {
-        return this.prisma.song.findMany();
+        return this.prisma.song.findMany({
+            orderBy: {
+                createdAt: "desc",
+            },
+            include: {
+                user: {
+                    select: {
+                        name: true,
+                    },
+                },
+            },
+        });
+    }
+    async create(createSongDto, userId) {
+        console.log("createSongDto thoi gian", createSongDto.duration);
+        const song = await this.prisma.song.create({
+            data: {
+                title: createSongDto.title,
+                artist: createSongDto.artist,
+                duration: createSongDto.duration,
+                songUrl: createSongDto.songUrl,
+                imageUrl: createSongDto.imageUrl,
+                userId: userId,
+            },
+        });
+        return song;
+    }
+    async findOne(id) {
+        return this.prisma.song.findUnique({
+            where: { id },
+        });
+    }
+    async delete(id, userId) {
+        const song = await this.prisma.song.findUnique({
+            where: { id },
+        });
+        if (!song || song.userId !== userId) {
+            throw new common_1.UnauthorizedException();
+        }
+        await this.prisma.song.delete({
+            where: { id },
+        });
+        return song;
     }
 };
 exports.SongService = SongService;

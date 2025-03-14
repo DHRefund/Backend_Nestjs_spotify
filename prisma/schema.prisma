@@ -25,7 +25,7 @@ model Song {
   title     String
   artist    String
   duration  Int
-  url       String
+  songUrl   String
   imageUrl  String?
   userId    String
   createdAt DateTime @default(now())
@@ -33,6 +33,8 @@ model Song {
 
   user      User      @relation(fields: [userId], references: [id])
   playlists Playlist[]
+
+  @@map("songs")
 }
 
 model Playlist {

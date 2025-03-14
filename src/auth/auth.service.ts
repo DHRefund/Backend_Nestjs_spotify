@@ -1,10 +1,10 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Response } from "express";
 import { PrismaService } from "../prisma/prisma.service";
 import * as bcrypt from "bcrypt";
-import { User } from "@prisma/client";
-import { v4 as uuidv4 } from "uuid";
+import { LoginDto } from "./dto/login.dto";
+import { RegisterDto } from "./dto/register.dto";
 
 @Injectable()
 export class AuthService {
@@ -13,38 +13,8 @@ export class AuthService {
     private jwtService: JwtService
   ) {}
 
-  private async getTokens(userId: string, email: string) {
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(
-        {
-          sub: userId,
-          email,
-        },
-        {
-          secret: process.env.JWT_SECRET,
-          expiresIn: "15m",
-        }
-      ),
-      this.jwtService.signAsync(
-        {
-          sub: userId,
-          email,
-        },
-        {
-          secret: process.env.JWT_REFRESH_SECRET,
-          expiresIn: "7d",
-        }
-      ),
-    ]);
-
-    return {
-      accessToken,
-      refreshToken,
-    };
-  }
-
-  private setTokenCookie(response: Response, refreshToken: string) {
-    response.cookie("refresh_token", refreshToken, {
+  private setTokenCookie(response: Response, token: string) {
+    response.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -52,14 +22,16 @@ export class AuthService {
     });
   }
 
-  async register(email: string, password: string, name: string, response: Response) {
+  async register(registerDto: RegisterDto, response: Response) {
+    const { email, password, name } = registerDto;
+
     // Check if user exists
     const existingUser = await this.prisma.user.findUnique({
       where: { email },
     });
 
     if (existingUser) {
-      throw new ConflictException("Email already registered");
+      throw new UnauthorizedException("Email already exists");
     }
 
     // Hash password
@@ -74,14 +46,19 @@ export class AuthService {
       },
     });
 
-    // Generate tokens
-    const tokens = await this.getTokens(user.id, user.email);
+    // Generate token
+    const token = this.jwtService.sign(
+      { userId: user.id },
+      {
+        secret: process.env.JWT_SECRET,
+        expiresIn: "7d",
+      }
+    );
 
-    // Set refresh token in HttpOnly cookie
-    this.setTokenCookie(response, tokens.refreshToken);
+    // Set token in cookie
+    this.setTokenCookie(response, token);
 
     return {
-      access_token: tokens.accessToken,
       user: {
         id: user.id,
         email: user.email,
@@ -90,7 +67,9 @@ export class AuthService {
     };
   }
 
-  async login(email: string, password: string, response: Response) {
+  async login(loginDto: LoginDto, response: Response) {
+    const { email, password } = loginDto;
+
     // Find user
     const user = await this.prisma.user.findUnique({
       where: { email },
@@ -107,14 +86,19 @@ export class AuthService {
       throw new UnauthorizedException("Invalid credentials");
     }
 
-    // Generate tokens
-    const tokens = await this.getTokens(user.id, user.email);
+    // Generate token
+    const token = this.jwtService.sign(
+      { userId: user.id },
+      {
+        secret: process.env.JWT_SECRET,
+        expiresIn: "7d",
+      }
+    );
 
-    // Set refresh token in HttpOnly cookie
-    this.setTokenCookie(response, tokens.refreshToken);
+    // Set token in cookie
+    this.setTokenCookie(response, token);
 
     return {
-      access_token: tokens.accessToken,
       user: {
         id: user.id,
         email: user.email,
@@ -140,53 +124,18 @@ export class AuthService {
     return user;
   }
 
-  async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const { password, ...result } = user;
-      return result;
-    }
-    return null;
-  }
-
-  async refresh(refreshToken: string, response: Response) {
-    try {
-      const payload = this.jwtService.verify(refreshToken, {
-        secret: process.env.JWT_REFRESH_SECRET,
-      });
-
-      const user = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
-      });
-
-      if (!user) throw new UnauthorizedException();
-
-      const tokens = await this.getTokens(user.id, user.email);
-
-      // Set new refresh token in HttpOnly cookie
-      this.setTokenCookie(response, tokens.refreshToken);
-
-      return {
-        access_token: tokens.accessToken,
-      };
-    } catch {
-      throw new UnauthorizedException();
-    }
-  }
-
   async logout(response: Response) {
-    response.clearCookie("refresh_token");
+    response.clearCookie("token");
     return { success: true };
   }
 
-  async getUserFromToken(token: string): Promise<User> {
+  async getUserFromToken(token: string) {
     try {
-      const payload = this.jwtService.verify(token);
+      const payload = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
       const user = await this.prisma.user.findUnique({
-        where: { id: payload.sub },
+        where: { id: payload.userId },
       });
       return user;
     } catch (error) {
