@@ -19,9 +19,7 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         super({
             jwtFromRequest: passport_jwt_1.ExtractJwt.fromExtractors([
                 (request) => {
-                    console.log("Cookies in request:", request.cookies);
                     const token = request?.cookies?.token;
-                    console.log("Extracted token:", token);
                     return token;
                 },
             ]),
@@ -31,7 +29,6 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         this.prisma = prisma;
     }
     async validate(payload) {
-        console.log("Payload in validate:", payload);
         const user = await this.prisma.user.findUnique({
             where: { id: payload.userId },
         });

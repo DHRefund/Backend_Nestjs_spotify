@@ -31,7 +31,6 @@ let SongService = class SongService {
         });
     }
     async create(createSongDto, userId) {
-        console.log("createSongDto thoi gian", createSongDto.duration);
         const song = await this.prisma.song.create({
             data: {
                 title: createSongDto.title,
@@ -60,6 +59,79 @@ let SongService = class SongService {
             where: { id },
         });
         return song;
+    }
+    async toggleLike(songId, userId) {
+        const existingLike = await this.prisma.likedSong.findUnique({
+            where: {
+                userId_songId: {
+                    userId: userId,
+                    songId: songId,
+                },
+            },
+        });
+        if (existingLike) {
+            await this.prisma.likedSong.delete({
+                where: {
+                    userId_songId: {
+                        userId: userId,
+                        songId: songId,
+                    },
+                },
+            });
+            return { liked: false };
+        }
+        else {
+            await this.prisma.likedSong.create({
+                data: {
+                    userId: userId,
+                    songId: songId,
+                },
+            });
+            return { liked: true };
+        }
+    }
+    async getLikedSongs(userId) {
+        try {
+            const likedSongs = await this.prisma.likedSong.findMany({
+                where: {
+                    userId: userId,
+                },
+                include: {
+                    song: {
+                        include: {
+                            user: {
+                                select: {
+                                    name: true,
+                                },
+                            },
+                        },
+                    },
+                },
+                orderBy: {
+                    createdAt: "desc",
+                },
+            });
+            console.log("Raw liked songs from DB:", likedSongs);
+            const transformedSongs = likedSongs.map((like) => ({
+                id: like.song.id,
+                title: like.song.title,
+                artist: like.song.artist,
+                duration: like.song.duration,
+                songUrl: like.song.songUrl,
+                imageUrl: like.song.imageUrl,
+                userId: like.song.userId,
+                createdAt: like.song.createdAt,
+                updatedAt: like.song.updatedAt,
+                likedAt: like.createdAt,
+                user: like.song.user,
+            }));
+            console.log("Transformed liked songs:", transformedSongs);
+            return transformedSongs;
+        }
+        catch (error) {
+            console.error("Error in getLikedSongs:", error);
+            throw error;
+        }
     }
 };
 exports.SongService = SongService;

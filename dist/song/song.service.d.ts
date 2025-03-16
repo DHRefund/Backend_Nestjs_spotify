@@ -8,4 +8,22 @@ export declare class SongService {
     create(createSongDto: CreateSongDto, userId: string): Promise<Song>;
     findOne(id: string): Promise<Song | null>;
     delete(id: string, userId: string): Promise<Song>;
+    toggleLike(songId: string, userId: string): Promise<{
+        liked: boolean;
+    }>;
+    getLikedSongs(userId: string): Promise<{
+        id: string;
+        title: string;
+        artist: string;
+        duration: number;
+        songUrl: string;
+        imageUrl: string;
+        userId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        likedAt: Date;
+        user: {
+            name: string;
+        };
+    }[]>;
 }

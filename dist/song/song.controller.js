@@ -21,15 +21,13 @@ let SongController = class SongController {
     constructor(songService) {
         this.songService = songService;
     }
+    async getLikedSongs(req) {
+        return this.songService.getLikedSongs(req.user.id);
+    }
     async getAllSongs() {
         return this.songService.findAll();
     }
     async createSong(createSongDto, req) {
-        console.log("Request in createSong:", {
-            headers: req.headers,
-            cookies: req.cookies,
-            user: req.user,
-        });
         return this.songService.create(createSongDto, req.user.id);
     }
     async getSong(id) {
@@ -38,8 +36,19 @@ let SongController = class SongController {
     async deleteSong(id, req) {
         return this.songService.delete(id, req.user.id);
     }
+    async toggleLike(id, req) {
+        return this.songService.toggleLike(id, req.user.id);
+    }
 };
 exports.SongController = SongController;
+__decorate([
+    (0, common_1.Get)("liked"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], SongController.prototype, "getLikedSongs", null);
 __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
@@ -71,6 +80,15 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], SongController.prototype, "deleteSong", null);
+__decorate([
+    (0, common_1.Post)(":id/like"),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)("id")),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], SongController.prototype, "toggleLike", null);
 exports.SongController = SongController = __decorate([
     (0, common_1.Controller)("songs"),
     __metadata("design:paramtypes", [song_service_1.SongService])
