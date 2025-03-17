@@ -20,47 +20,47 @@ export declare class SongController {
     }[]>;
     getAllSongs(): Promise<{
         id: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         artist: string;
-        duration: number;
         songUrl: string;
         imageUrl: string | null;
+        duration: number;
     }[]>;
     createSong(createSongDto: CreateSongDto, req: any): Promise<{
         id: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         artist: string;
-        duration: number;
         songUrl: string;
         imageUrl: string | null;
+        duration: number;
     }>;
     getSong(id: string): Promise<{
         id: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         artist: string;
-        duration: number;
         songUrl: string;
         imageUrl: string | null;
+        duration: number;
     }>;
     deleteSong(id: string, req: any): Promise<{
         id: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
+        userId: string;
         title: string;
         artist: string;
-        duration: number;
         songUrl: string;
         imageUrl: string | null;
+        duration: number;
     }>;
     toggleLike(id: string, req: any): Promise<{
         liked: boolean;
