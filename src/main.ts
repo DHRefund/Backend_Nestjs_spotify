@@ -3,6 +3,21 @@ import { AppModule } from "./app.module";
 import { ValidationPipe } from "@nestjs/common";
 const cookieParser = require("cookie-parser"); // Sử dụng require
 
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
+
+async function testConnection() {
+  try {
+    await prisma.$connect();
+    console.log("Successfully connected to database");
+  } catch (error) {
+    console.error("Database connection error:", error);
+  }
+}
+
+testConnection();
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
